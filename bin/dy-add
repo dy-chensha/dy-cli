@@ -1,0 +1,55 @@
+// 引入交互式命令行
+const inquire = require('inquirer')
+// 修改终端控制台字符串样式
+const chalk = require('chalk')
+//  node内置文件模块
+const fs = require('fs')
+
+// 读取根目录下面的template.json
+const tplObj = require(`${__dirname}/../template`)
+
+let question = [
+	{
+		name:'name',
+		type:'input',
+		message:'请输入一个模板名称',
+		validate:(value)=>{
+			// 对于输入值的校验
+			if (value=='') {
+				return 'Name is required'
+			}else if(tplObj[value]){
+				return 'Template has already existed!'
+			}else{
+				return true
+			}
+		}
+	},
+	{
+		name: "url",
+		type: 'input',
+		message: "请输入模板地址",
+		validate (val) {
+			if (val === '') return 'The url is required!'
+			return true
+		}
+	}
+]
+
+inquire.prompt(question).then((answers)=>{
+	// 得到用户输入的内容
+	let {url,name} = answers
+	tplObj[name] = url.replace(/[\u0000-\u0019]/g, '')
+	// 利用fs模块操纵文件
+	fs.writeFile(`${__dirname}/../template.json`, JSON.stringify(tplObj), 'utf-8', err => {
+		if (err) {
+			console.log(err)
+		}else{
+			console.log('\n')
+			console.log(chalk.green('Added successfully!\n'))
+			console.log(chalk.grey('The latest template list is: \n'))
+			console.log(tplObj)
+			console.log('\n')
+		}
+	  })
+
+})

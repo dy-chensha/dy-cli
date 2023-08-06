@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+// 交互式命令行
+const inquirer = require("inquirer");
+// 终端命令
+const program = require("commander");
+// 终端文字
+const chalk = require("chalk");
+// 终端动画
+const ora = require("ora");
+// 远程下载
+const download = require("download-git-repo");
+// 模板
+const tplObj = require(`${__dirname}/../template`);
+
+// 得到命令行参数 dy init 模板名 项目名
+program.parse(process.argv);
+
+let templateName = ''
+let projectName = ''
+// 
+const question = [
+	{
+		name: "projectName",
+		type: "input",
+		message: "请输入项目名称",
+		validate(val) {
+			// 简单校验项目名空和已经有项目名
+			if (val === "") return "The projectName is required!";
+			return true;
+		}
+	}
+];
+
+const promptList = [
+	{
+	  type: "list",
+	  message: "请选择一个模板:",
+	  name: "templateName",
+	  choices: Object.keys(tplObj),
+	  validate(val) {
+		if (val === "") {
+		  return "请先创建模板";
+		}
+	  }
+	}
+];
+
+// 没有输入参数(dy create)
+if (program.args.length<1) {
+	// 让用户从已有模板选择
+	inquirer.prompt(promptList).then((answers)=>{
+		templateName = answers.templateName;
+	})
+	// 再输入模板名
+	.then(()=>{
+		inquirer.prompt(question).then(answers => {
+			projectName = answers.projectName;
+			startProject();
+		});
+	})
+}else{
+	// 得到模板名和项目名
+	templateName = program.args[0];
+	projectName = program.args[1];
+	// 小小校验一下参数
+	if (!tplObj[templateName]) {
+		console.log(chalk.red("\n Template does not exit! \n "));
+		return;
+	}
+	if (!projectName) {
+		console.log(chalk.red("\n The projectName is required! \n "));
+		return;
+	}
+	startProject();
+}
+
+// 开始创建模板，从远程仓库中下载
+function startProject() {
+	let url = tplObj[templateName]
+	// 通过chalk给出一些提示
+	console.log(chalk.white("\n Start generating... \n"));
+	// 通过ora出现加载图标
+	const spinner = ora("Downloading...");
+	spinner.start();
+	// 远程下载开始
+	download(url, projectName, err=>{
+		if (err) {
+			spinner.fail()
+			console.log(chalk.red(`Generation failed. ${err}`));
+			return;
+		}
+		// 结束加载图标
+		spinner.succeed();
+		console.log(chalk.green("\n Generation completed!"));
+		console.log("\n To get started");
+		console.log(`\n    cd ${projectName} \n`);
+		// 退出程序
+		process.exit();
+	})
+
+}
+

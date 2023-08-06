@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+// 当运行npm avl的时候就会找到这个文件开始运行
+// commander 是操作npm命令的库
+const program = require('commander')
+
+// 定义当前版本*(从pack,json中得到版本号)
+// 定义使用方法
+// 定义四个指令
+program.version(require('../package.json').version)//获取脚手架版本
+        .usage('<command> [options]')//定义命令的格式
+        .command('add','add a new template')//新增
+        .command('delete','delete a template')//删除
+        .command('list','list all template')//遍历所有template
+        .command('init','generate a new project from a template')//初始化项目
+
+// 解析命令行参数
+program.parse(process.argv)
